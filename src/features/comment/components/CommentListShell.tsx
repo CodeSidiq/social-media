@@ -80,6 +80,7 @@ const CommentListShell = ({
         return (
           <article
             key={comment.id}
+            aria-busy={isDeleting}
             className={`flex gap-3 py-4 ${
               index !== comments.length - 1 ? 'border-b border-border' : ''
             }`}
@@ -111,6 +112,7 @@ const CommentListShell = ({
                     type='button'
                     onClick={() => onDeleteComment?.(comment.id)}
                     disabled={isDeleting}
+                    title={isDeleting ? 'Deleting this comment' : 'Delete comment'}
                     className='shrink-0 text-sm font-medium text-destructive transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
                   >
                     {isDeleting ? 'Deleting...' : 'Delete'}

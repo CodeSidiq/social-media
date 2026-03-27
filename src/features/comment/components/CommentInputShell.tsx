@@ -18,7 +18,9 @@ type CommentInputShellProps = Readonly<{
   onToggleEmoji?: () => void;
   onSubmit?: (values: CreateCommentFormValues) => Promise<void>;
   isSubmitting?: boolean;
+  onDraftChange?: (value: string) => void;
   disabled?: boolean;
+  errorText?: string;
   helperText?: string;
   submitLabel?: string;
 }>;
@@ -31,7 +33,9 @@ const CommentInputShell = ({
   onToggleEmoji,
   onSubmit,
   isSubmitting = false,
+  onDraftChange,
   disabled = false,
+  errorText,
   helperText,
   submitLabel = 'Post',
 }: CommentInputShellProps) => {
@@ -49,16 +53,30 @@ const CommentInputShell = ({
     },
   });
 
+  const isSubmitDisabled = useMemo(() => {
+    const currentText = (getValues('text') ?? '').trim();
+    return disabled || isSubmitting || currentText.length === 0;
+  }, [disabled, isSubmitting, getValues]);
+
   const desktopEmojiLabel = useMemo(() => {
     return showEmojiPicker ? 'Close emoji picker' : 'Open emoji picker';
   }, [showEmojiPicker]);
 
   const handleValidSubmit = async (values: CreateCommentFormValues) => {
-    if (!onSubmit || disabled) {
+    if (!onSubmit || disabled || isSubmitting) {
       return;
     }
 
-    await onSubmit(values);
+    const trimmedText = values.text.trim();
+
+    if (trimmedText.length === 0) {
+      return;
+    }
+
+    await onSubmit({
+      ...values,
+      text: trimmedText,
+    });
 
     reset({
       text: '',
@@ -95,14 +113,18 @@ const CommentInputShell = ({
             type='text'
             placeholder={disabled ? 'Log in to add a comment.' : 'Add Comment'}
             aria-label='Post comment shell'
-            disabled={disabled || isSubmitting}
+            disabled={isSubmitDisabled}
             className='h-11 min-w-0 flex-1 bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60'
-            {...register('text')}
+            {...register('text', {
+                  onChange: (event) => {
+                    onDraftChange?.(event.target.value);
+                  },
+                })}
           />
 
           <button
             type='submit'
-            disabled={disabled || isSubmitting}
+            disabled={isSubmitDisabled}
             className='inline-flex h-11 shrink-0 items-center justify-center px-4 text-sm font-semibold text-primary transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
           >
             {isSubmitting ? 'Posting...' : submitLabel}
@@ -130,6 +152,8 @@ const CommentInputShell = ({
 
       {errors.text ? (
         <p className='text-sm text-destructive'>{errors.text.message}</p>
+      ) : errorText ? (
+        <p className='text-sm text-destructive'>{errorText}</p>
       ) : helperText ? (
         <p className='text-sm text-muted-foreground'>{helperText}</p>
       ) : null}

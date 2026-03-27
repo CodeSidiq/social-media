@@ -76,6 +76,7 @@ const CommentSurfaceShell = ({
   dataMode = 'runtime',
 }: CommentSurfaceShellProps) => {
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
+  const [activeDeletingCommentId, setActiveDeletingCommentId] = useState<number | null>(null);
   const [localEmojiPickerOpen, setLocalEmojiPickerOpen] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
 
@@ -133,6 +134,10 @@ const CommentSurfaceShell = ({
           text: values.text,
         },
       });
+
+      if (!onToggleEmoji) {
+        setLocalEmojiPickerOpen(false);
+      }
     } catch (error) {
       if (error instanceof Error) {
         setSurfaceError(error.message);
@@ -145,7 +150,12 @@ const CommentSurfaceShell = ({
   };
 
   const handleDeleteComment = async (commentId: number) => {
+    if (activeDeletingCommentId === commentId) {
+      return;
+    }
+
     setSurfaceError(null);
+    setActiveDeletingCommentId(commentId);
 
     try {
       await deleteCommentMutation.mutateAsync({
@@ -159,6 +169,10 @@ const CommentSurfaceShell = ({
       }
 
       setSurfaceError('Failed to delete comment.');
+    } finally {
+      setActiveDeletingCommentId((currentId) =>
+        currentId === commentId ? null : currentId
+      );
     }
   };
 
@@ -171,11 +185,16 @@ const CommentSurfaceShell = ({
     setLocalEmojiPickerOpen((currentState) => !currentState);
   };
 
-  const inputHelperText = surfaceError
-    ? surfaceError
-    : canSubmitComment
-      ? undefined
-      : 'Log in to add a comment.';
+  const handleDraftChange = () => {
+    if (surfaceError) {
+      setSurfaceError(null);
+    }
+  };
+
+  const inputErrorText = surfaceError ?? undefined;
+  const inputHelperText = canSubmitComment
+    ? undefined
+    : 'Log in to add a comment.';
 
   return (
     <DialogContent
@@ -289,9 +308,7 @@ const CommentSurfaceShell = ({
                       isLoading={commentsQuery.isLoading || commentsQuery.isFetching}
                       isError={commentsQuery.isError}
                       errorMessage={commentsQuery.error?.message}
-                      deletingCommentId={
-                        deleteCommentMutation.variables?.commentId ?? null
-                      }
+                      deletingCommentId={activeDeletingCommentId}
                       onDeleteComment={handleDeleteComment}
                       canDeleteComment={canDeleteComment}
                     />
@@ -354,7 +371,9 @@ const CommentSurfaceShell = ({
                     onToggleEmoji={handleToggleEmoji}
                     onSubmit={handleSubmitComment}
                     isSubmitting={createCommentMutation.isPending}
+                    onDraftChange={handleDraftChange}
                     disabled={!canSubmitComment}
+                    errorText={inputErrorText}
                     helperText={inputHelperText}
                   />
                 </div>
@@ -417,9 +436,7 @@ const CommentSurfaceShell = ({
                 isLoading={commentsQuery.isLoading || commentsQuery.isFetching}
                 isError={commentsQuery.isError}
                 errorMessage={commentsQuery.error?.message}
-                deletingCommentId={
-                  deleteCommentMutation.variables?.commentId ?? null
-                }
+                deletingCommentId={activeDeletingCommentId}
                 onDeleteComment={handleDeleteComment}
                 canDeleteComment={canDeleteComment}
               />
@@ -432,7 +449,9 @@ const CommentSurfaceShell = ({
                 onToggleEmoji={handleToggleEmoji}
                 onSubmit={handleSubmitComment}
                 isSubmitting={createCommentMutation.isPending}
+                    onDraftChange={handleDraftChange}
                 disabled={!canSubmitComment}
+                errorText={inputErrorText}
                 helperText={inputHelperText}
               />
             </div>
