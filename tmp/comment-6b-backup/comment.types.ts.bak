@@ -1,5 +1,0 @@
-// src/features/comment/types/comment.types.ts
-
-import type { PostPreview } from '@/types/entities/post';
-
-export type CommentSurfacePost = PostPreview;

@@ -1,9 +1,0 @@
-// src/features/comment/api/comment.api.ts
-
-import { api } from '@/lib/api';
-
-export const commentApi = {
-  getPostComments: async (postId: number) => {
-    return api.get(`/api/posts/${postId}/comments`);
-  },
-};
