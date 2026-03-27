@@ -1,0 +1,97 @@
+// src/features/comment/components/CommentInputShell.tsx
+'use client';
+
+import { Smile } from 'lucide-react';
+
+type CommentInputShellProps = Readonly<{
+  defaultValue?: string;
+  showEmojiPicker?: boolean;
+  onToggleEmoji?: () => void;
+}>;
+
+const emojiSamples = [
+  '😀',
+  '😅',
+  '🥰',
+  '😇',
+  '🙂',
+  '😊',
+  '😋',
+  '😜',
+  '🤔',
+  '😶',
+  '😉',
+  '😌',
+  '😂',
+  '😭',
+  '😱',
+  '🥳',
+];
+
+const CommentInputShell = ({
+  defaultValue = '',
+  showEmojiPicker = false,
+  onToggleEmoji,
+}: CommentInputShellProps) => {
+  return (
+    <div className='relative'>
+      {showEmojiPicker ? (
+        <div
+          className='absolute bottom-[calc(100%+0.625rem)] left-0 z-20 w-[11.25rem] rounded-xl border border-border bg-shell-background p-3 shadow-[0_16px_40px_rgba(0,0,0,0.38)]'
+          role='dialog'
+          aria-label='Emoji picker shell'
+        >
+          <div className='grid grid-cols-4 gap-2'>
+            {emojiSamples.map((emoji) => (
+              <button
+                key={emoji}
+                type='button'
+                className='inline-flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                aria-label={`Emoji ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className='flex items-end gap-2 md:gap-3'>
+        <button
+          type='button'
+          onClick={onToggleEmoji}
+          aria-label='Open emoji picker shell'
+          aria-haspopup='dialog'
+          aria-expanded={showEmojiPicker}
+          className='inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-shell-background text-foreground/85 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        >
+          <Smile className='h-[1.125rem] w-[1.125rem]' />
+        </button>
+
+        <div className='flex h-10 min-w-0 flex-1 items-center rounded-lg border border-border bg-shell-background pl-4 pr-3'>
+          <label className='sr-only' htmlFor='comment-shell-input'>
+            Add comment
+          </label>
+
+          <input
+            id='comment-shell-input'
+            type='text'
+            defaultValue={defaultValue}
+            placeholder='Add Comment'
+            className='h-full min-w-0 flex-1 border-none bg-transparent px-0 text-[0.9375rem] text-foreground outline-none placeholder:text-muted-foreground'
+          />
+
+          <button
+            type='button'
+            className='inline-flex h-8 shrink-0 items-center justify-center pl-3 text-base font-semibold text-primary transition-colors hover:text-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+            aria-label='Post comment shell'
+          >
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CommentInputShell;

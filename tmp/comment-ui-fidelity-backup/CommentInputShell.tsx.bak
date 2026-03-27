@@ -1,0 +1,111 @@
+// src/features/comment/components/CommentInputShell.tsx
+
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Smile } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+
+import {
+  createCommentSchema,
+  type CreateCommentFormValues,
+} from '@/features/comment/schemas/comment.schema';
+
+type CommentInputShellProps = Readonly<{
+  defaultValue?: string;
+  showEmojiPicker?: boolean;
+  onToggleEmoji?: () => void;
+  onSubmit?: (values: CreateCommentFormValues) => Promise<void>;
+  isSubmitting?: boolean;
+  disabled?: boolean;
+  helperText?: string;
+  submitLabel?: string;
+}>;
+
+const CommentInputShell = ({
+  defaultValue = '',
+  showEmojiPicker = false,
+  onToggleEmoji,
+  onSubmit,
+  isSubmitting = false,
+  disabled = false,
+  helperText,
+  submitLabel = 'Post',
+}: CommentInputShellProps) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateCommentFormValues>({
+    resolver: zodResolver(createCommentSchema),
+    defaultValues: {
+      text: defaultValue,
+    },
+  });
+
+  const handleValidSubmit = async (values: CreateCommentFormValues) => {
+    if (!onSubmit || disabled) {
+      return;
+    }
+
+    await onSubmit(values);
+    reset({
+      text: '',
+    });
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit(handleValidSubmit)}
+      className='flex flex-col gap-3'
+    >
+      <div className='flex items-start gap-3'>
+        <div className='flex-1'>
+          <label className='sr-only' htmlFor='comment-shell-input'>
+            Add comment
+          </label>
+
+          <textarea
+            id='comment-shell-input'
+            placeholder={disabled ? 'Log in to add a comment.' : 'Add Comment'}
+            aria-label='Post comment shell'
+            rows={2}
+            disabled={disabled || isSubmitting}
+            className='min-h-[5.5rem] w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
+            {...register('text')}
+          />
+
+          {errors.text ? (
+            <p className='mt-2 text-sm text-destructive'>{errors.text.message}</p>
+          ) : helperText ? (
+            <p className='mt-2 text-sm text-muted-foreground'>{helperText}</p>
+          ) : null}
+        </div>
+
+        <div className='flex shrink-0 flex-col items-center gap-2 pt-1'>
+          <button
+            type='button'
+            onClick={onToggleEmoji}
+            disabled={disabled}
+            className='inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
+            aria-label='Toggle emoji picker'
+            aria-pressed={showEmojiPicker}
+          >
+            <Smile className='h-5 w-5' />
+          </button>
+
+          <button
+            type='submit'
+            disabled={disabled || isSubmitting}
+            className='inline-flex min-w-20 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
+          >
+            {isSubmitting ? 'Posting...' : submitLabel}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default CommentInputShell;

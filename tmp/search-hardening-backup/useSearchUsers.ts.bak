@@ -1,0 +1,76 @@
+// src/features/search/hooks/useSearchUsers.ts
+
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+import { searchApi } from '@/features/search/api/search.api';
+import { mapSearchUsersResponseDtoToResult } from '@/features/search/mappers/search.mapper';
+import type {
+  SearchUsersApiResponseDto,
+  SearchUsersResult,
+} from '@/features/search/types/search.types';
+import { queryKeys } from '@/lib/query-keys';
+
+const DEFAULT_MINIMUM_SEARCH_KEYWORD_LENGTH = 2;
+
+const getSearchErrorMessage = (error: unknown): string => {
+  if (axios.isAxiosError<SearchUsersApiResponseDto>(error)) {
+    const apiMessage = error.response?.data?.message;
+
+    if (apiMessage) {
+      return apiMessage;
+    }
+
+    if (error.message) {
+      return error.message;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Failed to search users.';
+};
+
+type UseSearchUsersParams = {
+  keyword: string;
+  page?: number;
+  limit?: number;
+  minimumKeywordLength?: number;
+};
+
+export const useSearchUsers = ({
+  keyword,
+  page = 1,
+  limit = 20,
+  minimumKeywordLength = DEFAULT_MINIMUM_SEARCH_KEYWORD_LENGTH,
+}: UseSearchUsersParams) => {
+  const normalizedKeyword = keyword.trim();
+  const isKeywordReady = normalizedKeyword.length >= minimumKeywordLength;
+
+  return useQuery<SearchUsersResult, Error>({
+    queryKey: queryKeys.search.users(normalizedKeyword, page, limit),
+    enabled: isKeywordReady,
+    queryFn: async () => {
+      try {
+        const response = await searchApi.searchUsers({
+          q: normalizedKeyword,
+          page,
+          limit,
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to search users.');
+        }
+
+        return mapSearchUsersResponseDtoToResult(response.data);
+      } catch (error) {
+        throw new Error(getSearchErrorMessage(error));
+      }
+    },
+    staleTime: 30_000,
+  });
+};

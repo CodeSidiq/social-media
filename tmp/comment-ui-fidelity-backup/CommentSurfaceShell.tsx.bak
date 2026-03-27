@@ -1,0 +1,486 @@
+// src/features/comment/components/CommentSurfaceShell.tsx
+
+'use client';
+
+import {
+  Bookmark,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Send,
+  X,
+} from 'lucide-react';
+import Image from 'next/image';
+import { useMemo, useState } from 'react';
+
+import {
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
+import { useMe } from '@/features/auth/hooks/useMe';
+import CommentInputShell from '@/features/comment/components/CommentInputShell';
+import CommentListShell, {
+  type CommentShellItem,
+} from '@/features/comment/components/CommentListShell';
+import CommentPostPreviewShell from '@/features/comment/components/CommentPostPreviewShell';
+import { useCreateComment } from '@/features/comment/hooks/useCreateComment';
+import { useDeleteComment } from '@/features/comment/hooks/useDeleteComment';
+import { usePostComments } from '@/features/comment/hooks/usePostComments';
+import type { CreateCommentFormValues } from '@/features/comment/schemas/comment.schema';
+import type { CommentSurfacePost } from '@/features/comment/types/comment.types';
+
+type CommentSurfaceShellProps = Readonly<{
+  post: CommentSurfacePost;
+  variant?: 'empty' | 'filled';
+  showEmojiPicker?: boolean;
+  onToggleEmoji?: () => void;
+  defaultDraft?: string;
+  comments?: readonly CommentShellItem[];
+}>;
+
+const COMMENTS_PAGE = 1;
+const COMMENTS_LIMIT = 10;
+
+const formatPostDateLabel = (value: string): string => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+};
+
+const CommentSurfaceShell = ({
+  post,
+  variant = 'filled',
+  showEmojiPicker = false,
+  onToggleEmoji,
+  defaultDraft = '',
+  comments = [],
+}: CommentSurfaceShellProps) => {
+  const [surfaceError, setSurfaceError] = useState<string | null>(null);
+
+  const token = useAuthToken();
+  const meQuery = useMe(token);
+
+  const commentsQuery = usePostComments({
+    postId: post.id,
+    page: COMMENTS_PAGE,
+    limit: COMMENTS_LIMIT,
+  });
+
+  const createCommentMutation = useCreateComment();
+  const deleteCommentMutation = useDeleteComment();
+
+  const me = meQuery.data?.data ?? null;
+  const formattedDate = formatPostDateLabel(post.createdAt);
+  const isLikedVisual = post.relationship.likedByMe;
+  const avatarAlt = `${post.author.name} avatar`;
+  const canSubmitComment = Boolean(token);
+
+  const baseComments = useMemo(() => {
+    if (variant === 'empty') {
+      return [] as readonly CommentShellItem[];
+    }
+
+    if (commentsQuery.data?.items) {
+      return commentsQuery.data.items;
+    }
+
+    return comments;
+  }, [comments, commentsQuery.data?.items, variant]);
+
+  const enhancedComments = useMemo(() => {
+    return baseComments.map((comment) => ({
+      ...comment,
+    }));
+  }, [baseComments]);
+
+  const totalCommentCount =
+    commentsQuery.data?.pagination.total ?? post.stats.commentCount;
+
+  const canDeleteComment = (comment: CommentShellItem): boolean => {
+    if (!me) {
+      return false;
+    }
+
+    return comment.authorId === me.id || post.author.id === me.id;
+  };
+
+  const handleSubmitComment = async (
+    values: CreateCommentFormValues
+  ): Promise<void> => {
+    setSurfaceError(null);
+
+    try {
+      await createCommentMutation.mutateAsync({
+        postId: post.id,
+        payload: {
+          text: values.text,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        setSurfaceError(error.message);
+        return;
+      }
+
+      setSurfaceError('Failed to post comment.');
+      throw error;
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    setSurfaceError(null);
+
+    try {
+      await deleteCommentMutation.mutateAsync({
+        postId: post.id,
+        commentId,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        setSurfaceError(error.message);
+        return;
+      }
+
+      setSurfaceError('Failed to delete comment.');
+    }
+  };
+
+  const inputHelperText = surfaceError
+    ? surfaceError
+    : canSubmitComment
+      ? undefined
+      : 'Log in to add a comment.';
+
+  return (
+    <DialogContent
+      showCloseButton={false}
+      overlayClassName='bg-black/35 backdrop-blur-[3px]'
+      className='h-[100dvh] max-w-none rounded-none border-none bg-transparent p-0 shadow-none sm:h-auto sm:w-[min(96vw,75rem)] sm:max-w-none sm:rounded-none sm:border-none md:h-[min(45rem,calc(100dvh-7rem))] md:w-[min(75rem,calc(100vw-3rem))]'
+    >
+      <DialogTitle className='sr-only'>Comment Surface</DialogTitle>
+
+      <DialogDescription className='sr-only'>
+        Responsive comment dialog shell with real comment data integration.
+      </DialogDescription>
+
+      <div className='relative h-full min-h-0'>
+        <div className='hidden h-full min-h-0 md:block'>
+          <div className='relative h-full min-h-0 px-2 pb-2 pt-8 lg:px-3 lg:pb-3 lg:pt-8'>
+            <DialogClose
+              className='absolute right-2 top-0 z-[90] inline-flex h-6 w-6 items-center justify-center text-foreground/90 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:right-3'
+              aria-label='Close dialog'
+            >
+              <X className='h-5 w-5' />
+            </DialogClose>
+
+            <div className='grid h-full min-h-0 grid-cols-[minmax(0,1fr)_27.5rem] border border-border bg-shell-background'>
+              <div className='min-h-0 overflow-hidden border-r border-border'>
+                <CommentPostPreviewShell post={post} variant='desktop' />
+              </div>
+
+              <section className='flex min-h-0 flex-col bg-shell-background'>
+                <div className='shrink-0 px-5 pt-3'>
+                  <div className='flex items-start gap-3'>
+                    <div className='relative mt-0.5 h-11 w-11 shrink-0 overflow-hidden rounded-full bg-muted'>
+                      <Image
+                        src={
+                          post.author.avatarUrl ??
+                          '/assets/avatar/avatar-placeholder.jpg'
+                        }
+                        alt={avatarAlt}
+                        fill
+                        sizes='44px'
+                        className='object-cover'
+                      />
+                    </div>
+
+                    <div className='relative min-w-0 flex-1 pr-12'>
+                      <button
+                        type='button'
+                        className='absolute right-0 top-0 inline-flex h-5 w-5 shrink-0 items-center justify-center text-foreground/80 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                        aria-label='Open more actions'
+                      >
+                        <MoreHorizontal className='h-5 w-5' />
+                      </button>
+
+                      <div className='min-w-0'>
+                        <h2 className='truncate text-base font-semibold leading-6 text-foreground'>
+                          {post.author.name}
+                        </h2>
+
+                        <p className='mt-0.5 text-sm leading-5 text-muted-foreground'>
+                          {formattedDate}
+                        </p>
+                      </div>
+
+                      <p className='mt-2 text-sm leading-5 text-foreground'>
+                        {post.caption}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='min-h-0 flex-1 px-5 pt-4'>
+                  <div className='flex h-full min-h-0 flex-col border-t border-border'>
+                    <div className='shrink-0 pt-3'>
+                      <h3 className='text-base font-semibold leading-6 text-foreground'>
+                        Comments
+                      </h3>
+                    </div>
+
+                    <div className='min-h-0 flex-1 overflow-hidden pt-3'>
+                      <div className='h-full overflow-y-auto pr-1'>
+                        <CommentListShell
+                          comments={enhancedComments}
+                          isLoading={commentsQuery.isLoading || commentsQuery.isFetching}
+                          isError={commentsQuery.isError}
+                          errorMessage={commentsQuery.error?.message}
+                          deletingCommentId={
+                            deleteCommentMutation.variables?.commentId ?? null
+                          }
+                          onDeleteComment={handleDeleteComment}
+                          canDeleteComment={canDeleteComment}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='shrink-0 border-t border-border px-5 py-3'>
+                  <div className='flex items-center justify-between gap-4'>
+                    <div className='flex items-center gap-6'>
+                      <button
+                        type='button'
+                        className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                        aria-label='Like post'
+                      >
+                        <Heart
+                          className={`h-[1.375rem] w-[1.375rem] ${
+                            isLikedVisual ? 'fill-current text-destructive' : ''
+                          }`}
+                        />
+                        <span className='text-base leading-6 text-foreground'>
+                          {post.stats.likeCount}
+                        </span>
+                      </button>
+
+                      <button
+                        type='button'
+                        className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                        aria-label='Open comments'
+                      >
+                        <MessageCircle className='h-[1.375rem] w-[1.375rem]' />
+                        <span className='text-base leading-6 text-foreground'>
+                          {totalCommentCount}
+                        </span>
+                      </button>
+
+                      <button
+                        type='button'
+                        className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                        aria-label='Share post'
+                      >
+                        <Send className='h-[1.375rem] w-[1.375rem]' />
+                        <span className='text-base leading-6 text-foreground'>
+                          0
+                        </span>
+                      </button>
+                    </div>
+
+                    <button
+                      type='button'
+                      className='inline-flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                      aria-label='Bookmark post'
+                    >
+                      <Bookmark className='h-5 w-5 fill-current text-foreground' />
+                    </button>
+                  </div>
+                </div>
+
+                <div className='shrink-0 border-t border-border px-5 py-3'>
+                  <CommentInputShell
+                    defaultValue={defaultDraft}
+                    showEmojiPicker={showEmojiPicker}
+                    onToggleEmoji={onToggleEmoji}
+                    onSubmit={handleSubmitComment}
+                    isSubmitting={createCommentMutation.isPending}
+                    disabled={!canSubmitComment}
+                    helperText={inputHelperText}
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div className='flex h-full min-h-0 flex-col bg-shell-background md:hidden'>
+          <section className='flex h-full min-h-0 flex-col bg-shell-background'>
+            <div className='relative shrink-0 overflow-hidden border-b border-border/60'>
+              <div className='relative overflow-hidden'>
+                <div className='absolute inset-0'>
+                  <CommentPostPreviewShell post={post} variant='mobile' />
+                </div>
+
+                <div
+                  className='absolute inset-0 bg-black/65'
+                  aria-hidden='true'
+                />
+
+                <div
+                  className='absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/75'
+                  aria-hidden='true'
+                />
+
+                <div className='relative z-[1] flex min-h-[18.5rem] flex-col px-4 pb-5 pt-4'>
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='flex min-w-0 items-start gap-3 pr-6'>
+                      <div className='relative mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-full'>
+                        <Image
+                          src={
+                            post.author.avatarUrl ??
+                            '/assets/avatar/avatar-placeholder.jpg'
+                          }
+                          alt={avatarAlt}
+                          fill
+                          sizes='40px'
+                          className='object-cover'
+                        />
+                      </div>
+
+                      <div className='min-w-0 flex-1'>
+                        <h2 className='truncate text-[1.125rem] font-semibold leading-6 text-foreground'>
+                          {post.author.name}
+                        </h2>
+
+                        <p className='mt-0.5 text-[0.8125rem] leading-4 text-foreground/80'>
+                          {formattedDate}
+                        </p>
+                      </div>
+                    </div>
+
+                    <DialogClose
+                      className='inline-flex h-6 w-6 shrink-0 items-center justify-center text-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                      aria-label='Close dialog'
+                    >
+                      <X className='h-5 w-5' />
+                    </DialogClose>
+                  </div>
+
+                  <div className='mt-4 flex-1' />
+
+                  <p className='text-sm leading-6 text-foreground'>
+                    {post.caption}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className='shrink-0 border-t border-border/40 px-4 py-2.5'>
+              <div className='flex items-center justify-between gap-4'>
+                <div className='flex items-center gap-5'>
+                  <button
+                    type='button'
+                    className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                    aria-label='Like post'
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${
+                        isLikedVisual ? 'fill-current text-destructive' : ''
+                      }`}
+                    />
+                    <span className='text-sm leading-5 text-foreground'>
+                      {post.stats.likeCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type='button'
+                    className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                    aria-label='Open comments'
+                  >
+                    <MessageCircle className='h-5 w-5' />
+                    <span className='text-sm leading-5 text-foreground'>
+                      {totalCommentCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type='button'
+                    className='inline-flex items-center gap-2 text-foreground transition-colors hover:text-foreground/90'
+                    aria-label='Share post'
+                  >
+                    <Send className='h-5 w-5' />
+                    <span className='text-sm leading-5 text-foreground'>0</span>
+                  </button>
+                </div>
+
+                <button
+                  type='button'
+                  className='inline-flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                  aria-label='Bookmark post'
+                >
+                  <Bookmark className='h-5 w-5 fill-current text-foreground' />
+                </button>
+              </div>
+            </div>
+
+            <div className='min-h-0 flex-1 overflow-hidden px-4 pb-3 pt-3'>
+              <div className='flex h-full min-h-0 flex-col rounded-t-[1.75rem] bg-shell-background'>
+                <div className='shrink-0 border-b border-border px-1 pb-3 pt-1'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <h3 className='text-base font-semibold leading-6 text-foreground'>
+                      Comments
+                    </h3>
+
+                    <div className='text-sm text-muted-foreground'>
+                      {totalCommentCount}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='min-h-0 flex-1 overflow-y-auto py-2'>
+                  <CommentListShell
+                    comments={enhancedComments}
+                    isLoading={commentsQuery.isLoading || commentsQuery.isFetching}
+                    isError={commentsQuery.isError}
+                    errorMessage={commentsQuery.error?.message}
+                    deletingCommentId={
+                      deleteCommentMutation.variables?.commentId ?? null
+                    }
+                    onDeleteComment={handleDeleteComment}
+                    canDeleteComment={canDeleteComment}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className='shrink-0 border-t border-border px-4 py-3'>
+              <CommentInputShell
+                defaultValue={defaultDraft}
+                showEmojiPicker={showEmojiPicker}
+                onToggleEmoji={onToggleEmoji}
+                onSubmit={handleSubmitComment}
+                isSubmitting={createCommentMutation.isPending}
+                disabled={!canSubmitComment}
+                helperText={inputHelperText}
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+    </DialogContent>
+  );
+};
+
+export default CommentSurfaceShell;

@@ -1,8 +1,7 @@
-import type { NextConfig } from "next";
+// next.config.ts
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
-};
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
