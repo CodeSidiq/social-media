@@ -227,3 +227,19 @@
 .ds-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--color-neutral-600) 72%, transparent);
 }
+
+/* ========================================
+   COMMENT MODAL INTERACTION UTILITIES
+======================================== */
+
+.ds-interactive {
+  @apply transition-colors duration-150 ease-out cursor-pointer;
+}
+
+.ds-interactive-hover {
+  @apply hover:text-foreground hover:opacity-100;
+}
+
+.ds-icon-hover {
+  @apply hover:bg-muted/20 hover:text-foreground;
+}

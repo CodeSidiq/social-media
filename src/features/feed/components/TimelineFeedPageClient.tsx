@@ -143,6 +143,20 @@ const TimelineFeedPageClient = () => {
     postId: null,
   });
 
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+
+    if (commentModal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [commentModal.isOpen]);
+
   const feedQuery = useInfiniteFeed({
     limit: INITIAL_FEED_LIMIT,
   });

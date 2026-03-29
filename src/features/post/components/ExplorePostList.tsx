@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import FeedStateCard from '@/components/feedback/FeedStateCard';
 import Spinner from '@/components/ui/Spinner';
@@ -41,6 +41,20 @@ const ExplorePostList = () => {
     isOpen: false,
     postId: null,
   });
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+
+    if (commentModal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [commentModal.isOpen]);
 
   const exploreQuery = useInfiniteExplorePosts({
     limit: INITIAL_EXPLORE_LIMIT,
