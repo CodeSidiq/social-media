@@ -43,7 +43,7 @@ export const usePostComments = ({
   limit = 10,
 }: UsePostCommentsParams) => {
   return useQuery<PostCommentsQueryData, Error>({
-    queryKey: [...queryKeys.posts.comments(postId), page, limit] as const,
+    queryKey: queryKeys.posts.comments(postId, page, limit),
     queryFn: async () => {
       try {
         const response = await commentApi.getPostComments({

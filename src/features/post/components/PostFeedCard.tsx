@@ -1,12 +1,9 @@
 // src/features/post/components/PostFeedCard.tsx
-/**
- * Shared post card.
- * Used across timeline, explore, and public feed surfaces.
- * Access behavior must be injected through callbacks instead of hardcoded rules.
- */
 
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
 import { Bookmark, Heart, MessageCircle, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -20,6 +17,7 @@ type PostFeedCardProps = Readonly<{
   onOpenLikes?: (postId: number) => void;
   onOpenComments?: (postId: number) => void;
   onRestrictedAction?: (action: RestrictedActionType) => void;
+  onToggleLike?: (post: PostPreview) => void;
 }>;
 
 const formatPostDate = (value: string): string => {
@@ -44,6 +42,7 @@ const PostFeedCard = ({
   onOpenLikes,
   onOpenComments,
   onRestrictedAction,
+  onToggleLike,
 }: PostFeedCardProps) => {
   const captionMeasureRef = useRef<HTMLParagraphElement | null>(null);
 
@@ -56,7 +55,10 @@ const PostFeedCard = ({
   const imageAlt = post.caption || `Post image by ${post.author.name}`;
   const canOpenLikesModal = typeof onOpenLikes === 'function';
   const hasRestrictedActions = typeof onRestrictedAction === 'function';
+  const hasToggleLike = typeof onToggleLike === 'function';
   const hasCaption = Boolean(post.caption?.trim());
+
+  const profileHref = `/users/${post.author.username}`;
 
   useEffect(() => {
     const captionElement = captionMeasureRef.current;
@@ -77,7 +79,6 @@ const PostFeedCard = ({
       }
     };
 
-    // delay sedikit agar DOM benar-benar settle
     const raf = requestAnimationFrame(checkOverflow);
 
     window.addEventListener('resize', checkOverflow);
@@ -100,6 +101,11 @@ const PostFeedCard = ({
   };
 
   const handleLikeClick = () => {
+    if (hasToggleLike) {
+      onToggleLike(post);
+      return;
+    }
+
     if (hasRestrictedActions) {
       onRestrictedAction('like');
     }
@@ -129,17 +135,21 @@ const PostFeedCard = ({
   return (
     <article className='mx-auto w-full max-w-[42.75rem]'>
       <header className='flex items-start gap-3'>
-        <Avatar
-          src={post.author.avatarUrl}
-          alt={avatarAlt}
-          fallbackText={post.author.name}
-          size='md'
-        />
+        <Link href={profileHref}>
+          <Avatar
+            src={post.author.avatarUrl}
+            alt={avatarAlt}
+            fallbackText={post.author.name}
+            size='md'
+          />
+        </Link>
 
         <div className='min-w-0 flex-1'>
-          <p className='truncate text-sm font-semibold text-foreground sm:text-base'>
-            {post.author.name}
-          </p>
+          <Link href={profileHref}>
+            <p className='truncate text-sm font-semibold text-foreground hover:underline sm:text-base'>
+              {post.author.name}
+            </p>
+          </Link>
 
           <p className='mt-0.5 text-xs text-muted-foreground sm:text-sm'>
             {formattedDate}
@@ -149,11 +159,12 @@ const PostFeedCard = ({
 
       <div className='mt-4'>
         <div className='relative aspect-square w-full overflow-hidden rounded-[1rem]'>
-          <img
+          <Image
             src={post.imageUrl}
             alt={imageAlt}
-            className='h-full w-full object-cover'
-            loading='lazy'
+            fill
+            sizes='(max-width: 768px) 100vw, (max-width: 1280px) 600px, 684px'
+            className='object-cover'
           />
         </div>
       </div>
@@ -162,7 +173,7 @@ const PostFeedCard = ({
         <div className='flex items-center justify-between gap-4'>
           <div className='flex items-center gap-5 sm:gap-6'>
             <div className='inline-flex items-center gap-2'>
-              <button onClick={handleLikeClick} className={interactiveClass}>
+              <button type='button' onClick={handleLikeClick} className={interactiveClass}>
                 <Heart
                   className={`h-5 w-5 sm:h-[1.375rem] sm:w-[1.375rem] ${
                     isLikedVisual ? 'fill-current text-destructive' : ''
@@ -170,7 +181,11 @@ const PostFeedCard = ({
                 />
               </button>
 
-              <button onClick={handleLikesCountClick} className={interactiveClass}>
+              <button
+                type='button'
+                onClick={handleLikesCountClick}
+                className={interactiveClass}
+              >
                 <span className='text-sm sm:text-base'>
                   {post.stats.likeCount}
                 </span>
@@ -178,11 +193,15 @@ const PostFeedCard = ({
             </div>
 
             <div className='inline-flex items-center gap-2'>
-              <button onClick={handleCommentClick} className={interactiveClass}>
+              <button type='button' onClick={handleCommentClick} className={interactiveClass}>
                 <MessageCircle className='h-5 w-5 sm:h-[1.375rem] sm:w-[1.375rem]' />
               </button>
 
-              <button onClick={handleCommentClick} className={interactiveClass}>
+              <button
+                type='button'
+                onClick={handleCommentClick}
+                className={interactiveClass}
+              >
                 <span className='text-sm sm:text-base'>
                   {post.stats.commentCount}
                 </span>
@@ -190,11 +209,15 @@ const PostFeedCard = ({
             </div>
 
             <div className='inline-flex items-center gap-2'>
-              <button onClick={handleShareClick} className={interactiveClass}>
+              <button type='button' onClick={handleShareClick} className={interactiveClass}>
                 <Send className='h-5 w-5 sm:h-[1.375rem] sm:w-[1.375rem]' />
               </button>
 
-              <button onClick={handleShareClick} className={interactiveClass}>
+              <button
+                type='button'
+                onClick={handleShareClick}
+                className={interactiveClass}
+              >
                 <span className='text-sm sm:text-base'>0</span>
               </button>
             </div>
@@ -219,7 +242,7 @@ const PostFeedCard = ({
             <button
               type='button'
               onClick={handleToggleCaption}
-              className='mt-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+              className='mt-2 text-sm font-medium text-muted-foreground hover:text-foreground'
             >
               {isCaptionExpanded ? 'Show less' : 'Show more'}
             </button>

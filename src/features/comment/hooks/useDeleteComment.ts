@@ -48,14 +48,16 @@ export const useDeleteComment = () => {
       }
     },
     onSuccess: async (_, variables) => {
+      const { postId } = variables;
+
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.posts.comments(variables.postId),
+          queryKey: queryKeys.posts.comments(postId),
+          refetchType: 'active',
         }),
-
-
         queryClient.invalidateQueries({
-          queryKey: queryKeys.posts.detail(variables.postId),
+          queryKey: queryKeys.posts.detail(postId),
+          refetchType: 'active',
         }),
       ]);
     },

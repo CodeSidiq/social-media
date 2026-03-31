@@ -15,7 +15,8 @@ import { Dialog } from '@/components/ui/dialog';
 import CommentSurfaceShell from '@/features/comment/components/CommentSurfaceShell';
 import { mockComments } from '@/features/comment/mocks/mockComments';
 import LikesModalShell from '@/features/like/components/LikesModalShell';
-import { mockLikeUsers } from '@/features/like/mocks/mockLikeUsers';
+import { usePostLikes } from '@/features/like/hooks/usePostLikes';
+import { useToggleLike } from '@/features/like/hooks/useToggleLike';
 import PostFeedCard from '@/features/post/components/PostFeedCard';
 import { useInfiniteExplorePosts } from '@/features/post/hooks/useInfiniteExplorePosts';
 import { useInfiniteScrollSentinel } from '@/hooks/useInfiniteScrollSentinel';
@@ -37,6 +38,7 @@ const ExplorePostList = () => {
     isOpen: false,
     postId: null,
   });
+  const [likesPage, setLikesPage] = useState(1);
   const [commentModal, setCommentModal] = useState<CommentModalState>({
     isOpen: false,
     postId: null,
@@ -59,12 +61,19 @@ const ExplorePostList = () => {
   const exploreQuery = useInfiniteExplorePosts({
     limit: INITIAL_EXPLORE_LIMIT,
   });
+  const toggleLikeMutation = useToggleLike();
 
   const previews = useMemo(() => {
     return exploreQuery.data?.pages.flatMap((page) => page.previews) ?? [];
   }, [exploreQuery.data]);
 
   const currentExplorePosts = previews;
+
+  const likesQuery = usePostLikes({
+    postId: likesModal.postId,
+    page: likesPage,
+    limit: 20,
+  });
 
   const selectedLikesPost =
     likesModal.postId === null
@@ -77,6 +86,7 @@ const ExplorePostList = () => {
       : currentExplorePosts.find((post) => post.id === commentModal.postId) ?? null;
 
   const handleOpenLikes = (postId: number) => {
+    setLikesPage(1);
     setLikesModal({
       isOpen: true,
       postId,
@@ -84,6 +94,7 @@ const ExplorePostList = () => {
   };
 
   const handleCloseLikes = () => {
+    setLikesPage(1);
     setLikesModal({
       isOpen: false,
       postId: null,
@@ -94,6 +105,18 @@ const ExplorePostList = () => {
     setCommentModal({
       isOpen: true,
       postId,
+    });
+  };
+
+  const handleToggleLike = (post: (typeof previews)[number]) => {
+    if (toggleLikeMutation.isPending) {
+      return;
+    }
+
+    toggleLikeMutation.mutate({
+      postId: post.id,
+      likedByMe: post.relationship.likedByMe,
+      likeCount: post.stats.likeCount,
     });
   };
 
@@ -158,8 +181,8 @@ const ExplorePostList = () => {
       <section className='mx-auto w-full max-w-[42.75rem] px-4 sm:px-6'>
         <FeedStateCard
           title='Explore'
-          description='Terjadi kendala saat mengambil data explore post. Silakan coba lagi.'
-          actionLabel='Coba lagi'
+          description='Something went wrong while loading explore posts.'
+          actionLabel='Try again'
           onAction={() => {
             void exploreQuery.refetch();
           }}
@@ -173,7 +196,7 @@ const ExplorePostList = () => {
       <section className='mx-auto w-full max-w-[42.75rem] px-4 sm:px-6'>
         <FeedStateCard
           title='Explore'
-          description='Belum ada postingan public yang tersedia saat ini.'
+          description='No public posts are available right now.'
         />
       </section>
     );
@@ -188,6 +211,7 @@ const ExplorePostList = () => {
             post={post}
             onOpenLikes={handleOpenLikes}
             onOpenComments={handleOpenComments}
+            onToggleLike={handleToggleLike}
           />
         ))}
       </div>
@@ -203,7 +227,28 @@ const ExplorePostList = () => {
             }
           }}
           post={selectedLikesPost}
-          users={mockLikeUsers}
+          users={likesQuery.data?.users ?? []}
+          isLoading={likesQuery.isLoading}
+          isError={likesQuery.isError}
+          errorMessage={likesQuery.error?.message}
+          pagination={likesQuery.data?.pagination}
+          onRetry={() => {
+            setLikesPage(1);
+            void likesQuery.refetch();
+          }}
+          onLoadMore={() => {
+            const pagination = likesQuery.data?.pagination;
+
+            if (!pagination) {
+              return;
+            }
+
+            if (pagination.page >= pagination.totalPages || likesQuery.isFetching) {
+              return;
+            }
+
+            setLikesPage((currentPage) => currentPage + 1);
+          }}
         />
       ) : null}
 

@@ -11,6 +11,12 @@ type GetExplorePostsParams = Readonly<{
   limit?: number;
 }>;
 
+type LikePostResponseDto = Readonly<{
+  success: boolean;
+  message: string;
+  data: unknown;
+}>;
+
 const DEFAULT_EXPLORE_PAGE = 1;
 const DEFAULT_EXPLORE_LIMIT = 20;
 
@@ -33,6 +39,14 @@ export const postApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+  },
+
+  likePost: async (postId: number) => {
+    return api.post<LikePostResponseDto>(`/api/posts/${postId}/like`);
+  },
+
+  unlikePost: async (postId: number) => {
+    return api.delete<LikePostResponseDto>(`/api/posts/${postId}/like`);
   },
 
   /**

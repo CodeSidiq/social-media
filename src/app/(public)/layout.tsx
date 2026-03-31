@@ -1,10 +1,4 @@
 // src/app/(public)/layout.tsx
-/**
- * Public route-group layout.
- * Wraps unauthenticated or public-facing surfaces outside the protected app shell.
- * Public pages should stay visually aligned without leaking protected behavior.
- */
-
 
 import type { ReactNode } from 'react';
 
@@ -13,7 +7,11 @@ type PublicLayoutProps = Readonly<{
 }>;
 
 const PublicLayout = ({ children }: PublicLayoutProps) => {
-  return <>{children}</>;
+  return (
+    <div className='min-h-screen bg-shell-background text-foreground'>
+      {children}
+    </div>
+  );
 };
 
 export default PublicLayout;

@@ -5,14 +5,14 @@
  * This file should remain focused on presentation.
  */
 
-
 'use client';
 
 import Image from 'next/image';
 
+import { FeedbackState } from '@/components/feedback/FeedbackState';
 import CommentEmptyState from '@/features/comment/components/CommentEmptyState';
-import type { CommentItem } from '@/features/comment/types/comment.types';
 import CommentExpandableText from '@/features/comment/components/CommentExpandableText';
+import type { CommentItem } from '@/features/comment/types/comment.types';
 
 export type CommentShellItem = CommentItem;
 
@@ -58,11 +58,13 @@ const CommentListShell = ({
 
   if (isError) {
     return (
-      <div className='mx-5 rounded-xl border border-border bg-shell-background px-4 py-5'>
-        <p className='text-sm font-medium text-foreground'>Unable to load comments.</p>
-        <p className='mt-1 text-sm text-muted-foreground'>
-          {errorMessage || 'Something went wrong while loading comments.'}
-        </p>
+      <div className='px-5 py-4'>
+        <FeedbackState
+          variant='error'
+          title='Failed to load comments'
+          description={errorMessage || 'Something went wrong while loading comments.'}
+          className='rounded-2xl border border-border bg-shell-background px-6 py-8'
+        />
       </div>
     );
   }
@@ -120,7 +122,10 @@ const CommentListShell = ({
                 ) : null}
               </div>
 
-              <CommentExpandableText text={comment.text} className='mt-2 text-sm leading-7 text-foreground' />
+              <CommentExpandableText
+                text={comment.text}
+                className='mt-2 text-sm leading-7 text-foreground'
+              />
             </div>
           </article>
         );

@@ -9,9 +9,16 @@ import type { LikeUserShellItem } from '@/features/like/types/like-shell.types';
 type LikesUserRowProps = Readonly<{
   user: LikeUserShellItem;
   onFollowClick?: (user: LikeUserShellItem) => void;
+  isFollowActionLoading?: boolean;
+  isFollowActionDisabled?: boolean;
 }>;
 
-const LikesUserRow = ({ user, onFollowClick }: LikesUserRowProps) => {
+const LikesUserRow = ({
+  user,
+  onFollowClick,
+  isFollowActionLoading = false,
+  isFollowActionDisabled = false,
+}: LikesUserRowProps) => {
   return (
     <li className='flex items-center gap-3'>
       <Avatar
@@ -34,6 +41,8 @@ const LikesUserRow = ({ user, onFollowClick }: LikesUserRowProps) => {
       <FollowStateButton
         isFollowing={user.isFollowing}
         onClick={onFollowClick ? () => onFollowClick(user) : undefined}
+        isLoading={isFollowActionLoading}
+        disabled={isFollowActionDisabled}
       />
     </li>
   );

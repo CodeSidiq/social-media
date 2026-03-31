@@ -138,9 +138,9 @@ const PublicTimelinePageClient = () => {
             title='Public Feed'
             description={
               publicPostsQuery.error.message ||
-              'Terjadi kendala saat memuat postingan public.'
+              'Something went wrong while loading the public feed.'
             }
-            actionLabel='Coba lagi'
+            actionLabel='Try again'
             onAction={() => {
               void publicPostsQuery.refetch();
             }}
@@ -154,7 +154,7 @@ const PublicTimelinePageClient = () => {
         <section className='mx-auto w-full max-w-[42.75rem] px-4 sm:px-6'>
           <FeedStateCard
             title='Public Feed'
-            description='Belum ada postingan public yang bisa ditampilkan saat ini.'
+            description='No public posts are available right now.'
           />
         </section>
       );

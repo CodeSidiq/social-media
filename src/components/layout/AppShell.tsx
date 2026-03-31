@@ -1,10 +1,4 @@
 // src/components/layout/AppShell.tsx
-/**
- * Application shell for protected surfaces.
- * Owns global layout elements such as navbar, mobile header, and protected bottom dock.
- * Page components should provide content only and must not duplicate shell-level UI.
- */
-
 
 'use client';
 
@@ -16,6 +10,7 @@ import MobileHeader from '@/components/layout/MobileHeader';
 import ShellContainer from '@/components/layout/ShellContainer';
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
 import { useMe } from '@/features/auth/hooks/useMe';
+import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 
 type AppShellProps = Readonly<{
   children: ReactNode;
@@ -29,7 +24,12 @@ const FALLBACK_SHELL_IDENTITY = {
 
 const AppShell = ({ children }: AppShellProps) => {
   const token = useAuthToken();
+
+  // EXISTING AUTH DATA
   const { data } = useMe(token);
+
+  // 🔥 CACHE BRIDGE (NO UI USAGE)
+  useMyProfile(token);
 
   const shellIdentity = {
     displayName: data?.data?.name ?? FALLBACK_SHELL_IDENTITY.displayName,

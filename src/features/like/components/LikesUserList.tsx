@@ -8,9 +8,16 @@ import type { LikeUserShellItem } from '@/features/like/types/like-shell.types';
 type LikesUserListProps = Readonly<{
   users: readonly LikeUserShellItem[];
   onFollowClick?: (user: LikeUserShellItem) => void;
+  followLoadingUsername?: string | null;
+  isFollowActionDisabled?: boolean;
 }>;
 
-const LikesUserList = ({ users, onFollowClick }: LikesUserListProps) => {
+const LikesUserList = ({
+  users,
+  onFollowClick,
+  followLoadingUsername = null,
+  isFollowActionDisabled = false,
+}: LikesUserListProps) => {
   return (
     <ul className='space-y-4'>
       {users.map((user) => (
@@ -18,6 +25,8 @@ const LikesUserList = ({ users, onFollowClick }: LikesUserListProps) => {
           key={user.id}
           user={user}
           onFollowClick={onFollowClick}
+          isFollowActionLoading={followLoadingUsername === user.username}
+          isFollowActionDisabled={isFollowActionDisabled}
         />
       ))}
     </ul>

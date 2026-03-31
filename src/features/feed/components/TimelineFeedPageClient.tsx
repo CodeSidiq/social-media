@@ -17,7 +17,8 @@ import CommentSurfaceShell from '@/features/comment/components/CommentSurfaceShe
 import { mockComments } from '@/features/comment/mocks/mockComments';
 import { useInfiniteFeed } from '@/features/feed/hooks/useInfiniteFeed';
 import LikesModalShell from '@/features/like/components/LikesModalShell';
-import { generateDummyLikes } from '@/features/like/mocks/generateDummyLikes';
+import { usePostLikes } from '@/features/like/hooks/usePostLikes';
+import { useToggleLike } from '@/features/like/hooks/useToggleLike';
 import PostFeedCard from '@/features/post/components/PostFeedCard';
 import { useInfiniteScrollSentinel } from '@/hooks/useInfiniteScrollSentinel';
 
@@ -138,6 +139,7 @@ const TimelineFeedPageClient = () => {
     isOpen: false,
     postId: null,
   });
+  const [likesPage, setLikesPage] = useState(1);
   const [commentModal, setCommentModal] = useState<CommentModalState>({
     isOpen: false,
     postId: null,
@@ -160,12 +162,19 @@ const TimelineFeedPageClient = () => {
   const feedQuery = useInfiniteFeed({
     limit: INITIAL_FEED_LIMIT,
   });
+  const toggleLikeMutation = useToggleLike();
 
   const items = useMemo(() => {
     return feedQuery.data?.pages.flatMap((page) => page.items) ?? [];
   }, [feedQuery.data]);
 
   const currentFeedPosts = items;
+
+  const likesQuery = usePostLikes({
+    postId: likesModal.postId,
+    page: likesPage,
+    limit: 20,
+  });
 
   useEffect(() => {
     if (!successToast) {
@@ -186,6 +195,7 @@ const TimelineFeedPageClient = () => {
   };
 
   const handleOpenLikes = (postId: number) => {
+    setLikesPage(1);
     setLikesModal({
       isOpen: true,
       postId,
@@ -193,6 +203,7 @@ const TimelineFeedPageClient = () => {
   };
 
   const handleCloseLikes = () => {
+    setLikesPage(1);
     setLikesModal({
       isOpen: false,
       postId: null,
@@ -203,6 +214,18 @@ const TimelineFeedPageClient = () => {
     setCommentModal({
       isOpen: true,
       postId,
+    });
+  };
+
+  const handleToggleLike = (post: (typeof items)[number]) => {
+    if (toggleLikeMutation.isPending) {
+      return;
+    }
+
+    toggleLikeMutation.mutate({
+      postId: post.id,
+      likedByMe: post.relationship.likedByMe,
+      likeCount: post.stats.likeCount,
     });
   };
 
@@ -278,7 +301,7 @@ const TimelineFeedPageClient = () => {
               feedQuery.error.message ||
               'Terjadi kendala saat memuat authenticated feed.'
             }
-            actionLabel='Coba lagi'
+            actionLabel='Try again'
             onAction={() => {
               void feedQuery.refetch();
             }}
@@ -307,6 +330,7 @@ const TimelineFeedPageClient = () => {
               post={post}
               onOpenLikes={handleOpenLikes}
               onOpenComments={handleOpenComments}
+              onToggleLike={handleToggleLike}
             />
           ))}
         </div>
@@ -340,7 +364,28 @@ const TimelineFeedPageClient = () => {
             }
           }}
           post={selectedLikesPost}
-          users={generateDummyLikes(50)}
+          users={likesQuery.data?.users ?? []}
+          isLoading={likesQuery.isLoading}
+          isError={likesQuery.isError}
+          errorMessage={likesQuery.error?.message}
+          pagination={likesQuery.data?.pagination}
+          onRetry={() => {
+            setLikesPage(1);
+            void likesQuery.refetch();
+          }}
+          onLoadMore={() => {
+            const pagination = likesQuery.data?.pagination;
+
+            if (!pagination) {
+              return;
+            }
+
+            if (pagination.page >= pagination.totalPages || likesQuery.isFetching) {
+              return;
+            }
+
+            setLikesPage((currentPage) => currentPage + 1);
+          }}
         />
       ) : null}
 

@@ -1,5 +1,12 @@
 // src/features/like/types/like-shell.types.ts
 
+import type { FeedPagination } from '@/features/feed/types/feed.types';
+import type { PostPreview } from '@/types/entities/post';
+
+/**
+ * ⚠️ LEGACY TYPE (USED IN DEV SHELL)
+ * DO NOT REMOVE
+ */
 export type LikesShellPostContext = Readonly<{
   id: number;
   imageUrl: string;
@@ -20,6 +27,8 @@ export type LikesShellPostContext = Readonly<{
   }>;
 }>;
 
+export type LikesModalPostContext = PostPreview | LikesShellPostContext;
+
 export type LikeUserShellItem = Readonly<{
   id: number;
   username: string;
@@ -31,6 +40,13 @@ export type LikeUserShellItem = Readonly<{
 export type LikesModalShellProps = Readonly<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  post: LikesShellPostContext;
+  post: LikesModalPostContext;
   users: readonly LikeUserShellItem[];
+  isLoading?: boolean;
+  isError?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
+  pagination?: FeedPagination;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }>;
