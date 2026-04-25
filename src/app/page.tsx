@@ -12,12 +12,12 @@ import { useRouter } from 'next/navigation';
 
 import PublicTimelinePageClient from '@/features/feed/components/PublicTimelinePageClient';
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
-import { useMe } from '@/features/auth/hooks/useMe';
+import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 
 const RootPage = () => {
   const router = useRouter();
   const token = useAuthToken();
-  const meQuery = useMe(token);
+  const meQuery = useMyProfile(token);
 
   useEffect(() => {
     if (!token) {
