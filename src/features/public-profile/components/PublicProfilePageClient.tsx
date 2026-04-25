@@ -2,17 +2,12 @@
 
 'use client';
 
-import { useState } from 'react';
-
 import PublicProfileErrorState from '@/features/public-profile/components/PublicProfileErrorState';
 import PublicProfileHeader from '@/features/public-profile/components/PublicProfileHeader';
-import PublicProfileLikesSection from '@/features/public-profile/components/PublicProfileLikesSection';
 import PublicProfilePostsSection from '@/features/public-profile/components/PublicProfilePostsSection';
 import { usePublicProfile } from '@/features/public-profile/hooks/usePublicProfile';
-import { usePublicUserLikes } from '@/features/public-profile/hooks/usePublicUserLikes';
 import { usePublicUserPosts } from '@/features/public-profile/hooks/usePublicUserPosts';
 
-type PublicProfileTab = 'posts' | 'likes';
 
 type PublicProfilePageClientProps = Readonly<{
   username: string;
@@ -55,8 +50,6 @@ const HeaderLoadingShell = () => {
 const PublicProfilePageClient = ({
   username,
 }: PublicProfilePageClientProps) => {
-  const [activeTab, setActiveTab] = useState<PublicProfileTab>('posts');
-
   const profileQuery = usePublicProfile(username);
   const publicPostsQuery = usePublicUserPosts({
     username,
@@ -66,12 +59,6 @@ const PublicProfilePageClient = ({
 
   const posts = publicPostsQuery.data?.posts ?? [];
 
-  const publicLikesQuery = usePublicUserLikes({
-    username,
-    page: 1,
-    limit: 20,
-  });
-  const likedPosts = publicLikesQuery.data?.posts ?? [];
 
   if (profileQuery.isLoading) {
     return (
@@ -110,56 +97,16 @@ const PublicProfilePageClient = ({
     <div className='mx-auto flex w-full max-w-5xl flex-col gap-6 md:gap-8'>
       <PublicProfileHeader profile={profileQuery.data} />
 
-      <div className='mt-8 flex items-center gap-2 rounded-full border border-border bg-card p-1'>
-        <button
-          type='button'
-          onClick={() => setActiveTab('posts')}
-          className={[
-            'h-10 rounded-full px-5 text-sm font-medium transition-colors',
-            activeTab === 'posts'
-              ? 'bg-card text-foreground'
-              : 'text-muted-foreground hover:text-foreground',
-          ].join(' ')}
-          aria-pressed={activeTab === 'posts'}
-        >
-          Posts
-        </button>
-
-        <button
-          type='button'
-          onClick={() => setActiveTab('likes')}
-          className={[
-            'h-10 rounded-full px-5 text-sm font-medium transition-colors',
-            activeTab === 'likes'
-              ? 'bg-card text-foreground'
-              : 'text-muted-foreground hover:text-foreground',
-          ].join(' ')}
-          aria-pressed={activeTab === 'likes'}
-        >
-          Likes
-        </button>
-      </div>
 
       <section className='space-y-3'>
-        {activeTab === 'posts' ? (
-          <PublicProfilePostsSection
-            username={username}
-            posts={posts}
-            isLoading={publicPostsQuery.isLoading}
-            isError={publicPostsQuery.isError}
-            errorMessage={publicPostsQuery.error?.message}
-            onRetry={() => void publicPostsQuery.refetch()}
-          />
-        ) : (
-          <PublicProfileLikesSection
-            username={username}
-            posts={likedPosts}
-            isLoading={publicLikesQuery.isLoading}
-            isError={publicLikesQuery.isError}
-            errorMessage={publicLikesQuery.error?.message}
-            onRetry={() => void publicLikesQuery.refetch()}
-          />
-        )}
+        <PublicProfilePostsSection
+          username={username}
+          posts={posts}
+          isLoading={publicPostsQuery.isLoading}
+          isError={publicPostsQuery.isError}
+          errorMessage={publicPostsQuery.error?.message}
+          onRetry={() => void publicPostsQuery.refetch()}
+        />
       </section>
     </div>
   );
