@@ -4,14 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
 import { followApi, type FollowMutationResponseDto } from '@/features/follow/api/follow.api';
-import { invalidateFollowRelatedQueries } from '@/features/follow/lib/invalidate-follow-related-queries';
 import type { MyProfileViewModel } from '@/features/profile/types/profile.types';
 import type { PublicProfileViewModel } from '@/features/public-profile/types/public-profile.types';
 import { queryKeys } from '@/lib/query-keys';
 
 type FollowUserVariables = Readonly<{
   username: string;
-  postId: number;
 }>;
 
 const getFollowErrorMessage = (error: unknown): string => {
@@ -84,7 +82,6 @@ export const useFollowUser = () => {
         }
       );
 
-      await invalidateFollowRelatedQueries(queryClient, variables);
-    },
+          },
   });
 };

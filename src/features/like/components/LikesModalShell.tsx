@@ -97,9 +97,7 @@ const LikesModalShell = ({
     followUserMutation.isPending || unfollowUserMutation.isPending;
 
   const handleFollowClick = async (user: LikeUserShellItem) => {
-    const postId = typeof post?.id === 'number' ? post.id : null;
-
-    if (!postId || isFollowActionPending) {
+    if (isFollowActionPending) {
       return;
     }
 
@@ -107,7 +105,7 @@ const LikesModalShell = ({
     setActiveFollowUsername(user.username);
 
     console.log('[FOLLOW_DEBUG] click', {
-      postId,
+      
       username: user.username,
       isFollowing: user.isFollowing,
       userId: user.id,
@@ -117,12 +115,12 @@ const LikesModalShell = ({
       if (user.isFollowing) {
         await unfollowUserMutation.mutateAsync({
           username: user.username,
-          postId,
+          
         });
       } else {
         await followUserMutation.mutateAsync({
           username: user.username,
-          postId,
+          
         });
       }
     } catch (error) {
