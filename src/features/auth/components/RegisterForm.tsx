@@ -128,7 +128,7 @@ const RegisterForm = () => {
       tokenStorage.setToken(response.data.token);
 
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.auth.me,
+        queryKey: queryKeys.profile.me,
       });
 
       router.replace('/timeline');

@@ -9,7 +9,6 @@ import DesktopNavbar from '@/components/layout/DesktopNavbar';
 import MobileHeader from '@/components/layout/MobileHeader';
 import ShellContainer from '@/components/layout/ShellContainer';
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
-import { useMe } from '@/features/auth/hooks/useMe';
 import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 
 type AppShellProps = Readonly<{
@@ -25,16 +24,12 @@ const FALLBACK_SHELL_IDENTITY = {
 const AppShell = ({ children }: AppShellProps) => {
   const token = useAuthToken();
 
-  // EXISTING AUTH DATA
-  const { data } = useMe(token);
-
-  // 🔥 CACHE BRIDGE (NO UI USAGE)
-  useMyProfile(token);
+  const { data } = useMyProfile(token);
 
   const shellIdentity = {
-    displayName: data?.data?.name ?? FALLBACK_SHELL_IDENTITY.displayName,
-    username: data?.data?.username ?? FALLBACK_SHELL_IDENTITY.username,
-    avatarSrc: data?.data?.avatarUrl ?? FALLBACK_SHELL_IDENTITY.avatarSrc,
+    displayName: data?.name ?? FALLBACK_SHELL_IDENTITY.displayName,
+    username: data?.username ?? FALLBACK_SHELL_IDENTITY.username,
+    avatarSrc: data?.avatarUrl ?? FALLBACK_SHELL_IDENTITY.avatarSrc,
   };
 
   return (

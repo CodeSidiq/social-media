@@ -2,38 +2,14 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Bookmark, RefreshCcw } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
 import MyProfileGallerySection from '@/features/profile/components/MyProfileGallerySection';
 import SelfProfileHeader from '@/features/profile/components/SelfProfileHeader';
-import SelfProfileTabs from '@/features/profile/components/SelfProfileTabs';
 import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
-import type { ProfileTabKey } from '@/features/profile/types/profile.types';
 
-const SavedShell = () => {
-  return (
-    <section className='rounded-[1.75rem] border border-dashed border-border bg-card p-6 md:p-8'>
-      <div className='flex items-start gap-4'>
-        <div className='inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
-          <Bookmark className='size-5' aria-hidden='true' />
-        </div>
-
-        <div className='space-y-2'>
-          <h2 className='text-lg font-semibold text-card-foreground'>
-            Saved posts are deferred
-          </h2>
-          <p className='max-w-2xl text-sm leading-7 text-muted-foreground'>
-            The Saved surface belongs to the deferred extension roadmap and is
-            intentionally not connected to real data in Session 7B.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const LoadingShell = () => {
   return (
@@ -114,7 +90,6 @@ const ErrorShell = ({
 const MyProfilePageClient = () => {
   const token = useAuthToken();
   const { data, isLoading, isError, error, refetch } = useMyProfile(token);
-  const [activeTab, setActiveTab] = useState<ProfileTabKey>('gallery');
 
   if (isLoading) {
     return <LoadingShell />;
@@ -134,13 +109,7 @@ const MyProfilePageClient = () => {
       <SelfProfileHeader profile={data} />
 
       <div className='space-y-5 md:space-y-6'>
-        <SelfProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-        {activeTab === 'gallery' ? (
-          <MyProfileGallerySection token={token} />
-        ) : (
-          <SavedShell />
-        )}
+        <MyProfileGallerySection token={token} />
       </div>
     </div>
   );

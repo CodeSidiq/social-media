@@ -25,7 +25,7 @@ export const useLogin = () => {
        * even if the shape looks similar.
        */
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.auth.me,
+        queryKey: queryKeys.profile.me,
       });
     },
   });

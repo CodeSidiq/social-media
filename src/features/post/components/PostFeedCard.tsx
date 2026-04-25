@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bookmark, Heart, MessageCircle, Send } from 'lucide-react';
+import { Heart, MessageCircle, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -218,12 +218,12 @@ const PostFeedCard = ({
                 onClick={handleShareClick}
                 className={interactiveClass}
               >
-                <span className='text-sm sm:text-base'>0</span>
+                
               </button>
             </div>
           </div>
 
-          <Bookmark className='h-5 w-5 text-foreground' />
+          
         </div>
 
         <div className='mt-4'>

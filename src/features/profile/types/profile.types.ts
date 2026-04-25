@@ -1,6 +1,6 @@
 // src/features/profile/types/profile.types.ts
 
-export type ProfileTabKey = 'gallery' | 'saved';
+export type ProfileTabKey = 'gallery';
 
 export type MyProfileStats = Readonly<{
   postsCount: number;

@@ -25,7 +25,7 @@ import {
  DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
-import { useMe } from '@/features/auth/hooks/useMe';
+import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 import CommentInputShell from '@/features/comment/components/CommentInputShell';
 import CommentListShell, {
  type CommentShellItem,
@@ -81,7 +81,7 @@ const CommentSurfaceShell = ({
  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
 
  const token = useAuthToken();
- const meQuery = useMe(token);
+ const meQuery = useMyProfile(token);
 
  const commentsQuery = usePostComments({
   postId: post.id,
@@ -92,7 +92,7 @@ const CommentSurfaceShell = ({
  const createCommentMutation = useCreateComment();
  const deleteCommentMutation = useDeleteComment();
 
- const me = meQuery.data?.data ?? null;
+ const me = meQuery.data ?? null;
  const formattedDate = formatPostDateLabel(post.createdAt);
  const isLikedVisual = post.relationship.likedByMe;
  const avatarAlt = `${post.author.name} avatar`;

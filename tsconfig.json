@@ -38,8 +38,12 @@
   ],
   "exclude": [
     "**/audits",
+    "**/backup",
+    "**/backup/**",
     "**/tmp",
     "audits",
+    "backup",
+    "backup/**",
     "node_modules",
     "tmp"
   ]

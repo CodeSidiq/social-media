@@ -3,7 +3,7 @@
 'use client';
 
 import { useAuthToken } from '@/features/auth/hooks/useAuthToken';
-import { useMe } from '@/features/auth/hooks/useMe';
+import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 import { useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
@@ -14,7 +14,7 @@ type AuthPublicOnlyGateProps = {
 const AuthPublicOnlyGate = ({ children }: AuthPublicOnlyGateProps) => {
   const router = useRouter();
   const token = useAuthToken();
-  const { isLoading, isSuccess, isError } = useMe(token);
+  const { isLoading, isSuccess, isError } = useMyProfile(token);
 
   useEffect(() => {
     if (token && isSuccess) {

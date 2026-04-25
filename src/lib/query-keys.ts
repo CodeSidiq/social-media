@@ -3,7 +3,6 @@
 export const queryKeys = {
   auth: {
     all: ['auth'] as const,
-    me: ['auth', 'me'] as const,
   },
   profile: {
     all: ['profile'] as const,
