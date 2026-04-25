@@ -59,7 +59,10 @@ const LikesModalShell = ({
       return;
     }
 
-    setMergedUsers(users);
+    setMergedUsers((prev) => {
+      if (prev.length === 0) return users;
+      return prev;
+    });
   }, [open, users]);
 
   const normalizedIsLoading = Boolean(isLoading);
@@ -101,30 +104,44 @@ const LikesModalShell = ({
       return;
     }
 
+    const previousIsFollowing = user.isFollowing;
+    const nextIsFollowing = !previousIsFollowing;
+
     setFollowActionError(null);
     setActiveFollowUsername(user.username);
 
-    console.log('[FOLLOW_DEBUG] click', {
-      
-      username: user.username,
-      isFollowing: user.isFollowing,
-      userId: user.id,
-    });
+    setMergedUsers((currentUsers) =>
+      currentUsers.map((currentUser) =>
+        currentUser.username === user.username
+          ? {
+              ...currentUser,
+              isFollowing: nextIsFollowing,
+            }
+          : currentUser
+      )
+    );
 
     try {
-      if (user.isFollowing) {
+      if (previousIsFollowing) {
         await unfollowUserMutation.mutateAsync({
           username: user.username,
-          
         });
       } else {
         await followUserMutation.mutateAsync({
           username: user.username,
-          
         });
       }
     } catch (error) {
-      console.error('[FOLLOW_DEBUG] mutation error', error);
+      setMergedUsers((currentUsers) =>
+        currentUsers.map((currentUser) =>
+          currentUser.username === user.username
+            ? {
+                ...currentUser,
+                isFollowing: previousIsFollowing,
+              }
+            : currentUser
+        )
+      );
 
       const message =
         error instanceof Error
